@@ -1,9 +1,4 @@
 
-# DATA
-
-data "aws_availability_zones" "available" {}
-
-
 # NETWORKING #
 
 resource "aws_vpc" "project_vpc" {
@@ -22,9 +17,9 @@ resource "aws_internet_gateway" "igw_public" {
 }
 
 resource "aws_subnet" "private_subnet" {
-  count                   = "${length(var.private_subnet)}"
+  count                   = "${length(var.private_subnets)}"
   vpc_id                  =  aws_vpc.project_vpc.id
-  cidr_block              = "${var.private_subnet[count.index]}"
+  cidr_block              = "${var.private_subnets[count.index]}"
   availability_zone       = "${data.aws_availability_zones.available.names[count.index]}"
   map_public_ip_on_launch = false
   tags = {
@@ -33,9 +28,9 @@ resource "aws_subnet" "private_subnet" {
 }
 
 resource "aws_subnet" "public_subnet" {
-  count                   = "${length(var.public_subnet)}"
+  count                   = "${length(var.public_subnets)}"
   vpc_id                  =  aws_vpc.project_vpc.id
-  cidr_block              = "${var.public_subnet[count.index]}"
+  cidr_block              = "${var.public_subnets[count.index]}"
   availability_zone       = "${data.aws_availability_zones.available.names[count.index]}"
   map_public_ip_on_launch = true
   tags = {
@@ -47,7 +42,7 @@ resource "aws_subnet" "public_subnet" {
 
 resource "aws_eip" "eip_nat_gateway" {
   vpc    = true
-  count = length(var.public_subnet)
+  count = length(var.public_subnets)
 
   tags = {
       "Name" = "${var.project_name}-eip-nat-gateway-${regex(".$", data.aws_availability_zones.available.names[count.index])}"
@@ -58,7 +53,7 @@ resource "aws_eip" "eip_nat_gateway" {
 # Create Nat Gateway
 
 resource "aws_nat_gateway" "nat_gateway" {
-  count         = length(var.public_subnet)
+  count         = length(var.public_subnets)
   allocation_id = aws_eip.eip_nat_gateway.*.id[count.index]
   subnet_id     = aws_subnet.public_subnet.*.id[count.index]
 
@@ -98,7 +93,7 @@ resource "aws_route" "route_public" {
 }
 
 resource "aws_route" "route_private" {
-  count                  = length(var.private_subnet)
+  count                  = length(var.private_subnets)
   route_table_id = aws_route_table.rtb.*.id[count.index + 1]
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id  = aws_nat_gateway.nat_gateway.*.id[count.index]
