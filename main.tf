@@ -16,10 +16,10 @@ resource "aws_internet_gateway" "igw_public" {
     }
 }
 
-resource "aws_subnet" "private_subnets" {
-  count                   = "${length(var.private_subnets)}"
+resource "aws_subnet" "private_subnet" {
+  count                   = "${length(var.private_subnet)}"
   vpc_id                  =  aws_vpc.project_vpc.id
-  cidr_block              = "${var.private_subnets[count.index]}"
+  cidr_block              = "${var.private_subnet[count.index]}"
   availability_zone       = "${data.aws_availability_zones.available.names[count.index]}"
   map_public_ip_on_launch = false
   tags = {
@@ -27,10 +27,10 @@ resource "aws_subnet" "private_subnets" {
     }
 }
 
-resource "aws_subnet" "public_subnets" {
-  count                   = "${length(var.public_subnets)}"
+resource "aws_subnet" "public_subnet" {
+  count                   = "${length(var.public_subnet)}"
   vpc_id                  =  aws_vpc.project_vpc.id
-  cidr_block              = "${var.public_subnets[count.index]}"
+  cidr_block              = "${var.public_subnet[count.index]}"
   availability_zone       = "${data.aws_availability_zones.available.names[count.index]}"
   map_public_ip_on_launch = true
   tags = {
@@ -42,7 +42,7 @@ resource "aws_subnet" "public_subnets" {
 
 resource "aws_eip" "eip_nat_gateway" {
   vpc    = true
-  count = length(var.public_subnets)
+  count = length(var.public_subnet)
 
   tags = {
       "Name" = "${var.project_name}-eip-nat-gateway-${regex(".$", data.aws_availability_zones.available.names[count.index])}"
@@ -53,9 +53,9 @@ resource "aws_eip" "eip_nat_gateway" {
 # Create Nat Gateway
 
 resource "aws_nat_gateway" "nat_gateway" {
-  count         = length(var.public_subnets)
+  count         = length(var.public_subnet)
   allocation_id = aws_eip.eip_nat_gateway.*.id[count.index]
-  subnet_id     = aws_subnet.public_subnets.*.id[count.index]
+  subnet_id     = aws_subnet.public_subnet.*.id[count.index]
 
   tags = {
       "Name" = "${var.project_name}-nat-gateway-${regex(".$", data.aws_availability_zones.available.names[count.index])}"
@@ -72,15 +72,15 @@ resource "aws_route_table" "rtb" {
 
   
 resource "aws_route_table_association" "public_route_asso" {
-  count          = length(aws_subnet.public_subnets) 
-  subnet_id      = aws_subnet.public_subnets.*.id[count.index]
+  count          = length(aws_subnet.public_subnet) 
+  subnet_id      = aws_subnet.public_subnet.*.id[count.index]
   route_table_id = aws_route_table.rtb[0].id
 }
 
 
 resource "aws_route_table_association" "private_route_asso" {
-  count          = length(aws_subnet.private_subnets) 
-  subnet_id      = aws_subnet.private_subnets.*.id[count.index]
+  count          = length(aws_subnet.private_subnet) 
+  subnet_id      = aws_subnet.private_subnet.*.id[count.index]
   route_table_id = aws_route_table.rtb[count.index + 1].id
 }
 
@@ -93,7 +93,7 @@ resource "aws_route" "route_public" {
 }
 
 resource "aws_route" "route_private" {
-  count                  = length(var.private_subnets)
+  count                  = length(var.private_subnet)
   route_table_id = aws_route_table.rtb.*.id[count.index + 1]
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id  = aws_nat_gateway.nat_gateway.*.id[count.index]
