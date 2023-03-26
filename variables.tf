@@ -4,15 +4,15 @@ variable "vpc_cidr" {
   type = string
   description = "The cidr block of the VPC"
 }
-variable "private_subnets" {
+variable "private_subnet" {
   type    = list(string)
   default = []
 }
-variable "public_subnets" {
+variable "public_subnet" {
   type    = list(string)
   default = []
 }
 variable "route_tables_name_list" {
   type    = list(string)
-  default = []
+  default = ["public", "private-AZa", "private-AZb"]
 }
