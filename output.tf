@@ -14,10 +14,10 @@ output "vpc_cidr" {
 }
 
 output "private_subnets_id" {
-  value = aws_subnet.private_subnet.*.id
+  value = aws_subnet.private_subnets.*.id
 }
 output "public_subnets_id" {
-  value = aws_subnet.public_subnet.*.id
+  value = aws_subnet.public_subnets.*.id
 }
 
 output "igw-public" {
