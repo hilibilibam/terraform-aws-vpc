@@ -14,5 +14,5 @@ variable "public_subnets" {
 }
 variable "route_tables_name_list" {
   type    = list(string)
-  default = ["]
+  default = []
 }
