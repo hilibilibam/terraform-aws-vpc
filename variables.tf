@@ -16,3 +16,15 @@ variable "route_tables_name_list" {
   type    = list(string)
   default = ["public", "private-AZa", "private-AZb"]
 }
+
+variable "enable_dns_hostnames" {
+  description = "Should be true to enable DNS hostnames in the VPC"
+  type        = bool
+  default     = true
+}
+
+variable "enable_dns_support" {
+  description = "Should be true to enable DNS support in the VPC"
+  type        = bool
+  default     = true
+}
